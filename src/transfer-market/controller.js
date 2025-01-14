@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { DEFAULT_TEAM_SIZE } from '../constants/index.js';
+import { TEAM_SIZE } from '../constants/index.js';
 import { PlayerModel } from '../player/model.js';
 import { TeamModel } from '../team/model.js';
 import { calculatePaginationProps, calculateSkip } from '../utils/app.utils.js';
@@ -41,6 +41,7 @@ export const getTransferMarketData = async (req, res) => {
       {
         $facet: {
           data: [
+            { $sort: { updatedAt: -1 } },
             { $skip: calculateSkip(page, limit) },
             { $limit: +limit },
             {
@@ -82,7 +83,10 @@ export const buyPlayer = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { playerId } = req.params;
+    const { playerId } = req.query;
+
+    if (!playerId) return res.status(400).send('Player Id is not provided');
+
     const user = req?.user;
 
     const playerOnSale = await PlayerModel.findById(playerId).populate('team');
@@ -103,18 +107,14 @@ export const buyPlayer = async (req, res) => {
       return res.status(404).send('Player not listed on the transfer market!');
 
     // if buyer team has reached their maximum capacity
-    // const maxPlayerCategoryCount = DEFAULT_TEAM_SIZE[playerOnSale.position];
-
-    // if (
-    //   buyerTeam.players.filter(
-    //     (player) => player.position === playerOnSale.position,
-    //   ).length >= maxPlayerCategoryCount
-    // )
-    //   return res.status(403).send('Your team reached its maximum capacity!');
+    if (buyerTeam.players.length >= TEAM_SIZE.MAX)
+      return res.status(403).send('Your team reached its maximum capacity!');
 
     // if buyer team does not have enough funds
     // Calculate 95% of asking price
-    const purchasePrice = playerOnSale.askingPrice * 0.95;
+    const purchasePrice = +parseFloat(playerOnSale.askingPrice * 0.95).toFixed(
+      2,
+    );
 
     if (buyerTeam.budget < purchasePrice)
       return res
@@ -136,6 +136,8 @@ export const buyPlayer = async (req, res) => {
 
     // update the player
     playerOnSale.onTransferList = false;
+    playerOnSale.askingPrice = null;
+    playerOnSale.price = purchasePrice;
     playerOnSale.team = buyerTeam._id;
     await playerOnSale.save({ session });
 

@@ -3,7 +3,7 @@ import { delistPlayerOnMarket, listPlayerOnMarket } from './controller.js';
 
 const router = express.Router();
 
-router.patch('/listOnMarket/:playerId', listPlayerOnMarket);
-router.get('/delistOnMarket/:playerId', delistPlayerOnMarket);
+router.patch('/listOnMarket', listPlayerOnMarket);
+router.get('/delistOnMarket', delistPlayerOnMarket);
 
 export default router;

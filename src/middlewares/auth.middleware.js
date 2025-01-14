@@ -8,7 +8,7 @@ export const authenticateTokenMiddleware = (req, res, next) => {
   if (token == null) return res.status(401).send('Unauthorized!');
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
+    if (err) return res.status(403).send(err);
 
     req.user = user;
 

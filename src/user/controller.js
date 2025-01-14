@@ -33,6 +33,9 @@ export const authenticate = async (req, res) => {
     if (!isMatch)
       return res.status(400).send('Provided password is incorrect!');
 
+    // fail safe check if by any chance team creation fails in first place
+    // if (!user.teamCreated) initiateTeamCreationProcess(newUser._id);
+
     res.status(200).json({ user, ...generateAccessToken(user) });
   } catch (error) {
     res.status(500).json({ message: error?.message });
@@ -69,5 +72,17 @@ const initiateTeamCreationProcess = async (payload) => {
     await UserModel.findByIdAndUpdate(payload, { teamCreated: true });
   } catch (error) {
     throw error;
+  }
+};
+
+export const getTeamCreationStatus = async (req, res) => {
+  try {
+    const user = req?.user;
+
+    const status = await UserModel.findById(user?._id, 'teamCreated');
+
+    res.status(200).json({ status: status?.teamCreated });
+  } catch (error) {
+    res.status(500).json({ message: error?.message });
   }
 };
