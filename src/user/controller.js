@@ -34,7 +34,7 @@ export const authenticate = async (req, res) => {
       return res.status(400).send('Provided password is incorrect!');
 
     // fail safe check if by any chance team creation fails in first place
-    // if (!user.teamCreated) initiateTeamCreationProcess(newUser._id);
+    if (!user.teamCreated) initiateTeamCreationProcess(newUser._id);
 
     res.status(200).json({ user, ...generateAccessToken(user) });
   } catch (error) {
